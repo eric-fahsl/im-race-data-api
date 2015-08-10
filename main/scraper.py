@@ -154,25 +154,50 @@ def getTransitionData(soup, transitionIndex) :
 
 
 def getLatestUpdate(allSports) :
-	sports = ["swim","run"]
+	sports = ["swim","bike","run"]
 	lastSplit = {}
+	totalDistance = 0
 	for sport in sports :
-		latestUpdate = getLastNextSplit(allSports[sport])
-		if latestUpdate != {} and latestUpdate != None:
+		latestUpdate, totalDistance = getLastNextSplit(allSports[sport], totalDistance)
+		if latestUpdate != {} and latestUpdate != None :
 			latestUpdate["sport"] = sport
-			return latestUpdate
-	return {}
+			latestUpdate['totalDistance'] = round(totalDistance,1)
+			if not latestUpdate['same']:
+				return latestUpdate
+		
+	return latestUpdate
 
-def getLastNextSplit(raceData) :
+def getLastNextSplit(raceData, totalDistance) :
 	#print raceData
 
 	lastNextSplit = {}
+
+	onlyOneSplit = False
+	#distance special check if there is only one split (like for the swim)
+	if len(raceData["splits"]) == 1 :
+		onlyOneSplit = True
+
 	for split in raceData["splits"] :
-		lastNextSplit['next'] = split	
+		lastNextSplit['next'] = split
 		if split["raceTime"] == '--:--' :
-			return lastNextSplit
+			lastNextSplit['same'] = False
+			return (lastNextSplit, totalDistance)
 		lastNextSplit['previous'] = split
-	return {}
+
+		# if on the "total" field, replace total with "complete" and do not count the distance
+		if split['totalDistance'] == 'Total' :
+			split['totalDistance'] = 'Complete'
+			#If only one split for this activity, then do calculate the split distance
+			if onlyOneSplit :
+				totalDistance += float(split['splitDistance'])
+		else :
+			totalDistance += float(split['splitDistance'])
+			# print raceData["distanceTraveled"]
+
+	lastNextSplit['same'] = True
+	 #indicate there is nothing else left to be next
+	lastNextSplit['next'] = { 'totalDistance': 'DONE', 'estimatedRaceTime': 'DONE' }
+	return (lastNextSplit, totalDistance)
 
 def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:00:00') :
 	timeStart = datetime.now()
