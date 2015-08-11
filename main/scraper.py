@@ -3,7 +3,9 @@ import urllib
 # import xmlHelper
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
+
+CACHE = {}
 
 ##RUN SECTION
 # sectionIndex = xmlHelper.searchContentForTag("RUN DETAILS", "", "", "", str(soup), 0)[1]
@@ -199,21 +201,47 @@ def getLastNextSplit(raceData, totalDistance) :
 	lastNextSplit['next'] = { 'totalDistance': 'DONE', 'estimatedRaceTime': 'DONE' }
 	return (lastNextSplit, totalDistance)
 
+def getCacheContent(url) :
+	#first check if the URL is in the cache
+	if url in CACHE :
+		#get the cache content
+		cacheContent, cacheTtl = CACHE[url]
+
+		#check if the cache TTL has passed, if not then return the cache content
+		if (datetime.now() - cacheTtl).total_seconds() < 0 :
+			print "retrieving from cache: " + url
+			return cacheContent
+
+		# else :
+		# 	del CACHE[url]
+
+	return None
+
+def setCacheContent(url, data) :
+	print "setting cached content: " + url
+	cacheTtlTimestamp = datetime.now() + timedelta(0,60)
+	CACHE[url] = (data, cacheTtlTimestamp)
+
 def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:00:00') :
-	timeStart = datetime.now()
+	timeStart = datetime.now()	
 
 	# RACE_ID = "2278373444"
 	# RACE_ID="2278373444"
 	# RACE = "taiwan"
 	# BIB = 443
 	# BIB=1571
-	randomNum = int(random.uniform(0,100))
+	#randomNum = int(random.uniform(0,100))
 	# url = "http://tracking.ironmanlive.com/mobilesearch.php?rid=2278373444&race=taiwan&y=2015&athlete=559#axzz3X0O9WgL1"
-	url = "http://tracking.ironmanlive.com/mobilesearch.php?rid=" + raceId + "&race=" + race + "&y=2015&athlete=" + str(bib) + "#axzz3X0O9W" + str(randomNum)
+	url = "http://tracking.ironmanlive.com/mobilesearch.php?rid=" + raceId + "&race=" + race + "&y=2015&athlete=" + str(bib) + "#axzz3X0O9W" #+ str(randomNum)
 	# url = "http://tracking.ironmanlive.com/mobileathlete.php?rid=2147483676&race=florida70.3&bib=1571&v=3.0&beta=&1428859800#axzz3X6WZscVO"
 	#print url
 
-	soup = createSoup(url)
+	cachedContent = getCacheContent(url)
+	if cachedContent != None :
+		print "url is cached, returning cached content"
+		return cachedContent
+
+	soup = createSoup(url + str(random.uniform(0,100)))
 	
 	raceStartTimeSeconds = convertStringTimeToSeconds(raceStartTime)
 
@@ -233,4 +261,6 @@ def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:0
 	timeEnd = datetime.now()
 	allSports["elapsedTime"] = (timeEnd - timeStart).total_seconds()
 
-	return json.dumps(allSports)
+	jsonContent = json.dumps(allSports)
+	setCacheContent(url, jsonContent)
+	return jsonContent
