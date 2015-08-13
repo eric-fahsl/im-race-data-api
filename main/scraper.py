@@ -6,6 +6,7 @@ import random
 from datetime import datetime, timedelta
 
 CACHE = {}
+CACHE_TIME_SECONDS = 180
 
 ##RUN SECTION
 # sectionIndex = xmlHelper.searchContentForTag("RUN DETAILS", "", "", "", str(soup), 0)[1]
@@ -219,7 +220,7 @@ def getCacheContent(url) :
 
 def setCacheContent(url, data) :
 	print "setting cached content: " + url
-	cacheTtlTimestamp = datetime.now() + timedelta(0,60)
+	cacheTtlTimestamp = datetime.now() + timedelta(0, CACHE_TIME_SECONDS)
 	CACHE[url] = (data, cacheTtlTimestamp)
 
 def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:00:00') :
