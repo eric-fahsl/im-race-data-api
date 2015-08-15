@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timedelta
 
 CACHE = {}
-CACHE_TIME_SECONDS = 180
+CACHE_TIME_SECONDS = 90
 
 ##RUN SECTION
 # sectionIndex = xmlHelper.searchContentForTag("RUN DETAILS", "", "", "", str(soup), 0)[1]
@@ -210,7 +210,7 @@ def getCacheContent(url) :
 
 		#check if the cache TTL has passed, if not then return the cache content
 		if (datetime.now() - cacheTtl).total_seconds() < 0 :
-			print "retrieving from cache: " + url
+			# print "retrieving from cache: " + url
 			return cacheContent
 
 		# else :
@@ -219,7 +219,7 @@ def getCacheContent(url) :
 	return None
 
 def setCacheContent(url, data) :
-	print "setting cached content: " + url
+	# print "setting cached content: " + url
 	cacheTtlTimestamp = datetime.now() + timedelta(0, CACHE_TIME_SECONDS)
 	CACHE[url] = (data, cacheTtlTimestamp)
 
@@ -239,7 +239,7 @@ def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:0
 
 	cachedContent = getCacheContent(url)
 	if cachedContent != None :
-		print "url is cached, returning cached content"
+		# print "url is cached, returning cached content"
 		return cachedContent
 
 	soup = createSoup(url + str(random.uniform(0,100)))
@@ -265,3 +265,9 @@ def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:0
 	jsonContent = json.dumps(allSports)
 	setCacheContent(url, jsonContent)
 	return jsonContent
+
+def getCacheData() :
+	print json.dumps(CACHE)
+
+def resetCache() :
+	CACHE = {}
