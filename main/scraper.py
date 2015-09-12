@@ -160,47 +160,40 @@ def getLatestUpdate(allSports) :
 	sports = ["swim","bike","run"]
 	lastSplit = {}
 	totalDistance = 0
+	allSplits = []
+
+	#first combine all splits into a single one
+	priorSplitTime = ""
 	for sport in sports :
-		latestUpdate, totalDistance = getLastNextSplit(allSports[sport], totalDistance)
-		if latestUpdate != {} and latestUpdate != None :
-			latestUpdate["sport"] = sport
-			latestUpdate['totalDistance'] = round(totalDistance,1)
-			if not latestUpdate['same']:
-				return latestUpdate
 		
-	return latestUpdate
+		for sportSplit in allSports[sport]["splits"] :
+			#next make sure the same time isn't there, don't need duplicates
+			if sportSplit["raceTime"] != priorSplitTime :
+				sportSplit["sport"] = sport
+				allSplits.append(sportSplit)
+			priorSplitTime = sportSplit["raceTime"]
 
-def getLastNextSplit(raceData, totalDistance) :
-	#print raceData
+	#print json.dumps(allSplits)
+	return getLastNextSplit(allSplits)
+	# print getLastNextSplit(allSplits)
+	# print json.dumps(getLastNextSplit(allSplits), sort_keys=True, indent=4, separators=(',', ': '))
 
-	lastNextSplit = {}
 
-	onlyOneSplit = False
-	#distance special check if there is only one split (like for the swim)
-	if len(raceData["splits"]) == 1 :
-		onlyOneSplit = True
-
-	for split in raceData["splits"] :
-		lastNextSplit['next'] = split
+#find the "next" index, and also return the "latest"
+def getLastNextSplit(allSplits) :
+	lastNextSplit = { 'totalDistance': 0, 'previous': {} }	
+	for split in allSplits :
+		lastNextSplit['next'] = split		
 		if split["raceTime"] == '--:--' :
-			lastNextSplit['same'] = False
-			return (lastNextSplit, totalDistance)
+			return lastNextSplit
+		lastNextSplit['totalDistance'] += round(float(split['splitDistance']),2)
 		lastNextSplit['previous'] = split
 
-		# if on the "total" field, replace total with "complete" and do not count the distance
-		if split['totalDistance'] == 'Total' :
-			split['totalDistance'] = 'Complete'
-			#If only one split for this activity, then do calculate the split distance
-			if onlyOneSplit :
-				totalDistance += float(split['splitDistance'])
-		else :
-			totalDistance += float(split['splitDistance'])
-			# print raceData["distanceTraveled"]
+	#If here, then the race is finished, delete the "next" node
+	# lastNextSplit['next'] = {}
+	lastNextSplit['complete'] = 'DONE'
+	return lastNextSplit
 
-	lastNextSplit['same'] = True
-	 #indicate there is nothing else left to be next
-	lastNextSplit['next'] = { 'totalDistance': 'DONE', 'estimatedRaceTime': 'DONE' }
-	return (lastNextSplit, totalDistance)
 
 def getCacheContent(url) :
 	#first check if the URL is in the cache
@@ -263,7 +256,7 @@ def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:0
 	allSports["elapsedTime"] = (timeEnd - timeStart).total_seconds()
 
 	jsonContent = json.dumps(allSports)
-	setCacheContent(url, jsonContent)
+	# setCacheContent(url, jsonContent)
 	return jsonContent
 
 def getCacheData() :
