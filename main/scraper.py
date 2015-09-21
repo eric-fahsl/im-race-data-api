@@ -173,7 +173,7 @@ def getLatestUpdate(allSports) :
 				allSplits.append(sportSplit)
 			priorSplitTime = sportSplit["raceTime"]
 
-	#print json.dumps(allSplits)
+	# print json.dumps(allSplits)
 	return getLastNextSplit(allSplits)
 	# print getLastNextSplit(allSplits)
 	# print json.dumps(getLastNextSplit(allSplits), sort_keys=True, indent=4, separators=(',', ': '))
@@ -181,17 +181,40 @@ def getLatestUpdate(allSports) :
 
 #find the "next" index, and also return the "latest"
 def getLastNextSplit(allSplits) :
-	lastNextSplit = { 'totalDistance': 0, 'previous': {} }	
+	lastNextSplit = { 'totalDistance': 0, 'previous': {} }
+	
+	#start from the end, work to the beginning to see the latest non-empty split
+	# print len(allSplits)
+	lastNonEmptySplitIndex = len(allSplits) 
+	for split in reversed(allSplits) :
+		if split['raceTime'] != '--:--' :
+			#if done with race
+			if lastNonEmptySplitIndex == (len(allSplits)) :
+				lastNextSplit['complete'] = 'DONE'
+			break
+		lastNonEmptySplitIndex -= 1
+
+	# print lastNonEmptySplitIndex
+
+	i = 0
 	for split in allSplits :
 		lastNextSplit['next'] = split		
-		if split["raceTime"] == '--:--' :
-			return lastNextSplit
+		if i >= lastNonEmptySplitIndex :
+			break
 		lastNextSplit['totalDistance'] += round(float(split['splitDistance']),2)
 		lastNextSplit['previous'] = split
+		i += 1
+
+	# for split in allSplits :
+	# 	lastNextSplit['next'] = split		
+	# 	if split["raceTime"] == '--:--' :
+	# 		return lastNextSplit
+	# 	lastNextSplit['totalDistance'] += round(float(split['splitDistance']),2)
+	# 	lastNextSplit['previous'] = split
 
 	#If here, then the race is finished, delete the "next" node
 	# lastNextSplit['next'] = {}
-	lastNextSplit['complete'] = 'DONE'
+	# lastNextSplit['complete'] = 'DONE'
 	return lastNextSplit
 
 
