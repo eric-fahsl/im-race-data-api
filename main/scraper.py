@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timedelta
 
 CACHE = {}
-CACHE_TIME_SECONDS = 60
+CACHE_TIME_SECONDS = 70
 
 ##RUN SECTION
 # sectionIndex = xmlHelper.searchContentForTag("RUN DETAILS", "", "", "", str(soup), 0)[1]
