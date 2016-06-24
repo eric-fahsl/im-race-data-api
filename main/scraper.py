@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timedelta
 
 CACHE = {}
-CACHE_TIME_SECONDS = 70
+CACHE_TIME_SECONDS = 60
 
 ##RUN SECTION
 # sectionIndex = xmlHelper.searchContentForTag("RUN DETAILS", "", "", "", str(soup), 0)[1]
@@ -219,13 +219,33 @@ def getLastNextSplit(allSplits) :
 
 
 def getCacheContent(url) :
+	#if the cache is over the specified number of records, clear it out
+	# global CACHE
+	# print "Cache Len: " + str(len(CACHE))
+	# for x in CACHE :
+	# 	print x
+
+	# if CACHE and len(CACHE) > MAX_CACHE :
+	# 	cache = {}
+	# 	print "CLEARING CACHE OF RECORDS"
+	# 	# print CACHE
+
 	#first check if the URL is in the cache
+
 	if url in CACHE :
+
+		# print "content in cache!"
 		#get the cache content
+		
 		cacheContent, cacheTtl = CACHE[url]
+		isFinished = False
+		cacheContentObject = json.loads(cacheContent)
+		
+		if 'finished' in cacheContentObject :
+			isFinished = True
 
 		#check if the cache TTL has passed, if not then return the cache content
-		if (datetime.now() - cacheTtl).total_seconds() < 0 :
+		if isFinished or (datetime.now() - cacheTtl).total_seconds() < 0 :
 			# print "retrieving from cache: " + url
 			return cacheContent
 
@@ -278,12 +298,27 @@ def getRaceData(raceId='2278373444', race='taiwan', bib=443, raceStartTime='07:0
 	timeEnd = datetime.now()
 	allSports["elapsedTime"] = (timeEnd - timeStart).total_seconds()
 
+	if checkIfActivityComplete(allSports["run"]) :
+		allSports["finished"] = True
+
 	jsonContent = json.dumps(allSports)
-	# setCacheContent(url, jsonContent)
+	setCacheContent(url, jsonContent)
 	return jsonContent
 
 def getCacheData() :
 	print json.dumps(CACHE)
 
 def resetCache() :
+	print "RESETTING CACHE"
+	global CACHE
 	CACHE = {}
+
+#check if an activity has been completed
+def checkIfActivityComplete(sportObject) :
+	# print sportObject
+	splits = sportObject['splits']
+	lastRunSplit = splits[len(splits) - 1]
+	# print lastRunSplit['raceTime']
+	if lastRunSplit['raceTime'] != '--:--' :
+		return True
+	return False
